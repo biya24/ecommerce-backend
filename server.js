@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+
 const connectDB = require('./config/db');
 require('./models/User');
 require('./models/Vendor');
@@ -8,21 +9,22 @@ require('./models/Product');
 require('./models/Order');
 require('./models/Payment');
 require('./models/Review');
-const userRoutes = require('./routes/userRoutes'); // ✅ Import after defining express
+
+const userRoutes = require('./routes/userRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 
-
-
 dotenv.config(); // ✅ Load environment variables
 connectDB(); // ✅ Connect to MongoDB
 
-const app = express(); // ✅ Define app *before* using routes
-app.use(express.json()); // ✅ Middleware to parse JSON
-app.use(cors()); // ✅ Enable CORS
+const app = express();
+
+app.use(cors());
+app.use(express.json()); // ✅ Use only this for JSON parsing
+
 
 // ✅ Define Routes AFTER initializing app
 app.use('/api/users', userRoutes);
