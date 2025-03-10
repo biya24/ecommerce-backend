@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 
 const connectDB = require('./config/db');
+const bodyParser = require('body-parser');
 require('./models/User');
 require('./models/Vendor');
 require('./models/Product');
@@ -24,6 +25,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json()); // ✅ Use only this for JSON parsing
+app.use(bodyParser.urlencoded({ extended: true })); // ✅ Allow form-data requests
 
 
 // ✅ Define Routes AFTER initializing app
