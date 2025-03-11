@@ -4,24 +4,29 @@ const Product = require('../models/Product');
 // @route  POST /api/products/
 // @access Private (Only vendors)
 const createProduct = async (req, res) => {
-    const { name, description, price, stock, category, images } = req.body;
+    try {
+        const { name, description, price, stock, category, vendorId, imageUrl } = req.body;
 
-    if (req.user.role !== 'vendor') {
-        return res.status(403).json({ message: 'Only vendors can add products' });
+        // ✅ Validate required fields
+        if (!name || !price || !stock || !category || !vendorId || !imageUrl) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const product = await Product.create({
+            name,
+            description,
+            price,
+            stock,
+            category,
+            vendorId,
+            images: [imageUrl] // ✅ Store image URL in the array
+        });
+
+        res.status(201).json(product);
+    } catch (error) {
+        console.error("Product Creation Error:", error);
+        res.status(500).json({ message: "Failed to create product" });
     }
-
-    const product = new Product({
-        vendorId: req.user._id,
-        name,
-        description,
-        price,
-        stock,
-        category,
-        images,
-    });
-
-    const createdProduct = await product.save();
-    res.status(201).json(createdProduct);
 };
 
 // @desc   Get all products

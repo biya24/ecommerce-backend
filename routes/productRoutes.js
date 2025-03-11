@@ -2,6 +2,7 @@ const express = require('express');
 const { createProduct, getProducts, getProductById } = require('../controllers/productController');
 const upload = require('../middleware/uploadMiddleware');
 const { protect } = require('../middleware/authMiddleware');
+const Product = require('../models/Product');  // ✅ Import the Product model
 
 const router = express.Router();
 
