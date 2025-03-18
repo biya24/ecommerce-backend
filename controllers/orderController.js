@@ -101,6 +101,16 @@ const getOrders = async (req, res) => {
     }
 };
 
+// ✅ Get all orders for the logged-in user
+const getUserOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({ customerId: req.user._id }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching orders", error: error.message });
+    }
+};
+
 // ✅ Update order status (Shipped, Delivered, Canceled)
 const updateOrderStatus = async (req, res) => {
     try {
@@ -165,4 +175,4 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-module.exports = { placeOrder, getOrders, updateOrderStatus };
+module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus };

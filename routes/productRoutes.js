@@ -1,7 +1,7 @@
 const express = require('express');
-const { createProduct, getProducts, getProductById } = require('../controllers/productController');
+const { createProduct, getProducts, getProductById, getVendorProducts, deleteProduct } = require("../controllers/productController");
 const upload = require('../middleware/uploadMiddleware');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, vendorOnly } = require("../middleware/authMiddleware");
 const Product = require('../models/Product');  // ✅ Import the Product model
 
 const router = express.Router();
@@ -51,8 +51,12 @@ router.post('/', protect, async (req, res) => {
 });
 
 
+router.post("/", protect, vendorOnly, upload.single("image"), createProduct);
 router.get('/', getProducts);
+router.get("/vendor", protect, vendorOnly, getVendorProducts);
 router.get('/:id', getProductById);
+
+router.delete("/:id", protect, vendorOnly, deleteProduct);
 
 
 

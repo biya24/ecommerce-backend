@@ -100,4 +100,86 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUserProfile };
+
+// @desc   Update user profile
+// @route  PUT /api/users/profile
+// @access Private
+const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // ✅ Update name if provided
+        if (req.body.name) user.name = req.body.name;
+
+        // ✅ Update email if provided (check if already taken)
+        if (req.body.email && req.body.email !== user.email) {
+            const emailExists = await User.findOne({ email: req.body.email });
+            if (emailExists) {
+                return res.status(400).json({ message: "Email already in use" });
+            }
+            user.email = req.body.email;
+        }
+
+        // ✅ Update password if provided 
+        if (req.body.password) {
+            user.password = req.body.password; // This will be hashed automatically in `pre('save')`
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            token: generateToken(updatedUser._id), // ✅ Generate new token after update
+        });
+    } catch (error) {
+        console.error("Profile Update Error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
+// ✅ Get all users
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find().select("-password");
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// ✅ Promote user to vendor
+const promoteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.role = "vendor";
+        await user.save();
+        res.json({ message: "User promoted to vendor", user });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// ✅ Delete user
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.json({ message: "User deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser, deleteUser };
