@@ -169,6 +169,32 @@ const promoteUser = async (req, res) => {
     }
 };
 
+// @desc   Demote a vendor back to customer
+// @route  PUT /api/users/:id/demote
+// @access Private (Admin only)
+const demoteUserToCustomer = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.role !== "vendor") {
+            return res.status(400).json({ message: "Only vendors can be demoted" });
+        }
+
+        user.role = "customer"; // ✅ Change role back to customer
+        await user.save();
+
+        res.json({ message: "User demoted to customer", user });
+    } catch (error) {
+        console.error("Demotion Error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
 // ✅ Delete user
 const deleteUser = async (req, res) => {
     try {
@@ -182,4 +208,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser, deleteUser };
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser,demoteUserToCustomer , deleteUser };

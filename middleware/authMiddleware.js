@@ -3,22 +3,31 @@ const User = require("../models/User");
 
 const protect = async (req, res, next) => {
     let token;
+
     if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         try {
             token = req.headers.authorization.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.id).select("-password");
+
+            if (!req.user) {
+                return res.status(401).json({ message: "Not authorized, user not found" });
+            }
+
+            console.log("✅ Authenticated User:", req.user); // ✅ Debug Log
             next();
         } catch (error) {
+            console.error("❌ Token Verification Failed:", error);
             res.status(401).json({ message: "Not authorized, token failed" });
         }
     } else {
-        res.status(401).json({ message: "Not authorized, no token" });
+        res.status(401).json({ message: "Not authorized, no token provided" });
     }
 };
 
+// ✅ Middleware for Vendors Only
 const vendorOnly = (req, res, next) => {
-    console.log("🔹 Checking Vendor:", req.user); // ✅ Debugging Log
+    console.log("🔹 Checking Vendor Role:", req.user?.role || "No User"); // ✅ Debugging Log
 
     if (!req.user || req.user.role !== "vendor") {
         return res.status(403).json({ message: "Access denied. Only vendors are allowed." });
@@ -27,14 +36,15 @@ const vendorOnly = (req, res, next) => {
     next();
 };
 
-
-// ✅ Admin Only Middleware
+// ✅ Middleware for Admins Only
 const adminOnly = (req, res, next) => {
+    console.log("🔹 Checking Admin Role:", req.user?.role || "No User"); // ✅ Debugging Log
+
     if (!req.user || req.user.role !== "admin") {
-        return res.status(403).json({ message: "Access denied. Admins only" });
+        return res.status(403).json({ message: "Access Denied: Admins only" });
     }
+
     next();
 };
-
 
 module.exports = { protect, vendorOnly, adminOnly };

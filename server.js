@@ -36,6 +36,21 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 
+const Product = require('./models/Product'); // ✅ Import Product Model
+
+
+const testDB = async () => {
+    try {
+        const products = await Product.find();
+        console.log("🛠️ Direct DB Test - Product Count:", products.length);
+        console.log("🛠️ Sample Product:", products[0]); // Show first product (if exists)
+    } catch (error) {
+        console.error("❌ MongoDB Direct Test Failed:", error);
+    }
+};
+
+testDB();
+
 app.get('/', (req, res) => {
     res.send('API is running...');
 });

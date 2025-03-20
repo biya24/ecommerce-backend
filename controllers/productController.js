@@ -65,6 +65,38 @@ const getProducts = async (req, res) => {
     res.json(products);
 };
 
+const adminGetAllProducts = async (req, res) => {
+    try {
+        console.log("🔹 Admin User:", req.user);
+
+        // ✅ Ensure the requester is an admin
+        if (!req.user || req.user.role !== "admin") {
+            return res.status(403).json({ message: "Access Denied: Admins only" });
+        }
+
+        // ✅ Fetch all products
+        const products = await Product.find().lean(); // Use lean() for performance
+
+        // ✅ Convert `vendorId` to ObjectId **only if it's a string**
+        const fixedProducts = products.map(product => ({
+            ...product,
+            vendorId: mongoose.Types.ObjectId.isValid(product.vendorId)
+                ? new mongoose.Types.ObjectId(product.vendorId)  // Convert to ObjectId
+                : product.vendorId  // Keep as-is if already valid
+        }));
+
+        console.log("🛠️ Fixed Products:", fixedProducts);
+        res.json(fixedProducts);
+
+    } catch (error) {
+        console.error("❌ Error fetching all products:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
+
+
 // @desc   Get a product by ID
 // @route  GET /api/products/:id
 // @access Public
@@ -151,4 +183,24 @@ const deleteProduct = async (req, res) => {
 };
 
 
-module.exports = { createProduct, getProducts, getProductById, getVendorProducts, deleteProduct };
+// @desc   Delete a product by Admin
+// @route  DELETE /api/products/:id/admin
+// @access Private (Admin only)
+const deleteProductByAdmin = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        await product.deleteOne(); // ✅ Delete product
+        res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+        console.error("Product Deletion Error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
+module.exports = { createProduct, getProducts, getProductById, getVendorProducts, deleteProduct, adminGetAllProducts, deleteProductByAdmin };
