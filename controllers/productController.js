@@ -65,6 +65,8 @@ const getProducts = async (req, res) => {
     res.json(products);
 };
 
+
+
 const adminGetAllProducts = async (req, res) => {
     try {
         console.log("🔹 Admin User:", req.user);
@@ -74,25 +76,31 @@ const adminGetAllProducts = async (req, res) => {
             return res.status(403).json({ message: "Access Denied: Admins only" });
         }
 
-        // ✅ Fetch all products
-        const products = await Product.find().lean(); // Use lean() for performance
+        // ✅ Fetch all products with vendor details
+        const products = await Product.find().populate({
+            path: "vendorId",
+            model: "User", // ✅ Ensure it references 'User'
+            select: "name email role"
+        });
 
-        // ✅ Convert `vendorId` to ObjectId **only if it's a string**
-        const fixedProducts = products.map(product => ({
-            ...product,
-            vendorId: mongoose.Types.ObjectId.isValid(product.vendorId)
-                ? new mongoose.Types.ObjectId(product.vendorId)  // Convert to ObjectId
-                : product.vendorId  // Keep as-is if already valid
-        }));
+        console.log("✅ Retrieved Products:", products);
 
-        console.log("🛠️ Fixed Products:", fixedProducts);
-        res.json(fixedProducts);
+        if (!products.length) {
+            return res.status(404).json({ message: "No products found" });
+        }
 
+        res.json(products);
     } catch (error) {
         console.error("❌ Error fetching all products:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+
+        // ✅ Ensure proper error handling
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
     }
 };
+
 
 
 

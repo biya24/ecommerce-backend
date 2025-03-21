@@ -38,13 +38,16 @@ const vendorOnly = (req, res, next) => {
 
 // ✅ Middleware for Admins Only
 const adminOnly = (req, res, next) => {
-    console.log("🔹 Checking Admin Role:", req.user?.role || "No User"); // ✅ Debugging Log
+    console.log("🔹 Checking Admin Role:", req.user ? req.user.role : "No user found");
 
-    if (!req.user || req.user.role !== "admin") {
-        return res.status(403).json({ message: "Access Denied: Admins only" });
+    if (req.user && req.user.role === "admin") {
+        console.log("✅ Admin Access Granted");
+        next();
+    } else {
+        console.log("❌ Admin Access Denied");
+        res.status(403).json({ message: "Access Denied: Admins only" });
     }
-
-    next();
 };
+
 
 module.exports = { protect, vendorOnly, adminOnly };
