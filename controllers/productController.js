@@ -69,35 +69,28 @@ const getProducts = async (req, res) => {
 
 const adminGetAllProducts = async (req, res) => {
     try {
-        console.log("🔹 Admin User:", req.user);
+        console.log("🔹 Checking if protect middleware is running...");
+        console.log("🔹 Authenticated User:", req.user);
 
-        // ✅ Ensure the requester is an admin
         if (!req.user || req.user.role !== "admin") {
+            console.log("❌ Access Denied: Not an Admin");
             return res.status(403).json({ message: "Access Denied: Admins only" });
         }
 
-        // ✅ Fetch all products with vendor details
+        console.log("✅ Admin Access Granted");
+
         const products = await Product.find().populate({
             path: "vendorId",
-            model: "User", // ✅ Ensure it references 'User'
+            model: "User",
             select: "name email role"
         });
 
-        console.log("✅ Retrieved Products:", products);
-
-        if (!products.length) {
-            return res.status(404).json({ message: "No products found" });
-        }
+        console.log("✅ Products Retrieved for Admin:", products);
 
         res.json(products);
     } catch (error) {
         console.error("❌ Error fetching all products:", error);
-
-        // ✅ Ensure proper error handling
-        res.status(500).json({
-            message: "Server error",
-            error: error.message
-        });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 

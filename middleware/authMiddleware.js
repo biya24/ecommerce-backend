@@ -3,27 +3,33 @@ const User = require("../models/User");
 
 const protect = async (req, res, next) => {
     let token;
+    console.log("🔹 Checking for Authorization Header...");
 
     if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         try {
             token = req.headers.authorization.split(" ")[1];
+            console.log("🔹 Token Found:", token);
+
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.id).select("-password");
 
             if (!req.user) {
+                console.log("❌ User Not Found");
                 return res.status(401).json({ message: "Not authorized, user not found" });
             }
 
-            console.log("✅ Authenticated User:", req.user); // ✅ Debug Log
+            console.log("✅ Authenticated User:", req.user);
             next();
         } catch (error) {
             console.error("❌ Token Verification Failed:", error);
-            res.status(401).json({ message: "Not authorized, token failed" });
+            return res.status(401).json({ message: "Not authorized, token failed" });
         }
     } else {
-        res.status(401).json({ message: "Not authorized, no token provided" });
+        console.log("❌ No Authorization Header Provided");
+        return res.status(401).json({ message: "Not authorized, no token provided" });
     }
 };
+
 
 // ✅ Middleware for Vendors Only
 const vendorOnly = (req, res, next) => {
@@ -48,6 +54,7 @@ const adminOnly = (req, res, next) => {
         res.status(403).json({ message: "Access Denied: Admins only" });
     }
 };
+
 
 
 module.exports = { protect, vendorOnly, adminOnly };
