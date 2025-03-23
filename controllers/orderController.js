@@ -210,6 +210,33 @@ const getAllOrdersAdmin = async (req, res) => {
     }
 };
 
+// ✅ Get Order By ID
+const getOrderById = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate("customerId", "name email role")
+            .populate("items.productId", "name price");
+
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// ✅ Delete Order
+const deleteOrderByAdmin = async (req, res) => {
+    try {
+        await Order.findByIdAndDelete(req.params.id);
+        res.json({ message: "Order deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
 
 
-module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin };
+
+
+
+module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin, getOrderById, deleteOrderByAdmin};
