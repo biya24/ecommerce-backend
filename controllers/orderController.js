@@ -181,13 +181,13 @@ const getAllOrdersAdmin = async (req, res) => {
 
         const orders = await Order.find()
             .populate({
-                path: "user",
-                model: "User", // ✅ Ensure it references User model
-                select: "name email"
+                path: "customerId", // ✅ Correct reference
+                model: "User",
+                select: "name email" // ✅ Populate only name & email
             })
             .populate({
-                path: "orderItems.product",
-                model: "Product", // ✅ Ensure it references Product model
+                path: "items.productId", // ✅ Correct reference
+                model: "Product",
                 select: "name price"
             });
 
@@ -204,4 +204,7 @@ const getAllOrdersAdmin = async (req, res) => {
         });
     }
 };
+
+module.exports = { getAllOrdersAdmin };
+
 module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin };
