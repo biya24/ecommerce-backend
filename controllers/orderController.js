@@ -1,8 +1,10 @@
 const Order = require('../models/Order');
 const User = require('../models/User'); // ✅ Import User model to get customer email
 const sendEmail = require('../config/email');
+const Product = require('../models/Product');
 
 // @desc   Place a new order
+
 // @route  POST /api/orders
 // @access Private (Only customers)
 const placeOrder = async (req, res) => {
