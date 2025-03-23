@@ -180,8 +180,16 @@ const getAllOrdersAdmin = async (req, res) => {
         console.log("🔹 Admin fetching all orders:", req.user);
 
         const orders = await Order.find()
-            .populate("user", "name email") // Get customer details
-            .populate("orderItems.product", "name price");
+            .populate({
+                path: "user",
+                model: "User", // ✅ Ensure it references User model
+                select: "name email"
+            })
+            .populate({
+                path: "orderItems.product",
+                model: "Product", // ✅ Ensure it references Product model
+                select: "name price"
+            });
 
         if (!orders.length) {
             return res.status(404).json({ message: "No orders found" });
@@ -190,8 +198,10 @@ const getAllOrdersAdmin = async (req, res) => {
         res.json(orders);
     } catch (error) {
         console.error("❌ Error fetching orders:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({
+            message: "Server error",
+            error: error.message,
+        });
     }
 };
-
 module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin };
