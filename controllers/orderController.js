@@ -179,25 +179,28 @@ const updateOrderStatus = async (req, res) => {
 
 const getAllOrdersAdmin = async (req, res) => {
     try {
-        console.log("🔹 Admin fetching all orders:", req.user);
+        console.log("🔹 Admin Fetching All Orders:", req.user);
 
         const orders = await Order.find()
             .populate({
-                path: "customerId", // ✅ Correct reference
+                path: "customerId",
                 model: "User",
-                select: "name email" // ✅ Populate only name & email
+                select: "name email role"
             })
             .populate({
-                path: "items.productId", // ✅ Correct reference
+                path: "items.productId",
                 model: "Product",
                 select: "name price"
             });
 
-        if (!orders.length) {
-            return res.status(404).json({ message: "No orders found" });
+        // ✅ Remove orders where `customerId` is missing
+        const validOrders = orders.filter(order => order.customerId);
+
+        if (!validOrders.length) {
+            return res.status(404).json({ message: "No valid orders found" });
         }
 
-        res.json(orders);
+        res.json(validOrders);
     } catch (error) {
         console.error("❌ Error fetching orders:", error);
         res.status(500).json({
@@ -207,6 +210,6 @@ const getAllOrdersAdmin = async (req, res) => {
     }
 };
 
-module.exports = { getAllOrdersAdmin };
+
 
 module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin };
