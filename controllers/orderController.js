@@ -175,4 +175,23 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus };
+const getAllOrdersAdmin = async (req, res) => {
+    try {
+        console.log("🔹 Admin fetching all orders:", req.user);
+
+        const orders = await Order.find()
+            .populate("user", "name email") // Get customer details
+            .populate("orderItems.product", "name price");
+
+        if (!orders.length) {
+            return res.status(404).json({ message: "No orders found" });
+        }
+
+        res.json(orders);
+    } catch (error) {
+        console.error("❌ Error fetching orders:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+module.exports = { getUserOrders,placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin };

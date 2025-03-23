@@ -1,11 +1,13 @@
 const express = require('express');
-const {getUserOrders, placeOrder, getOrders, updateOrderStatus } = require('../controllers/orderController');
-const { protect } = require('../middleware/authMiddleware');
+const {getUserOrders, placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin } = require('../controllers/orderController');
+const { protect, adminOnly} = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.post('/', protect, placeOrder);
 router.get('/', protect, getOrders);
+router.get("/admin", protect, adminOnly, getAllOrdersAdmin);
+
 router.put('/:orderId/status', protect, updateOrderStatus); //route for updating order status
 
 // ✅ Fetch logged-in user's orders
