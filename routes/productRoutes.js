@@ -50,6 +50,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 //     }
 // });
 
+router.get("/admin", protect, adminOnly, adminGetAllProducts);
 
 router.post("/", protect, vendorOnly, upload.single("image"), createProduct);
 router.get('/', getProducts);
@@ -57,7 +58,7 @@ router.get("/vendor", protect, vendorOnly, getVendorProducts);
 router.get('/:id', getProductById);
 
 // ✅ Admin: Get all products
-router.get("/admin", protect, adminOnly, adminGetAllProducts);
+// router.get("/admin", protect, adminOnly, adminGetAllProducts);
 
 
 
