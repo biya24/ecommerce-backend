@@ -69,8 +69,8 @@ const getProducts = async (req, res) => {
 
 const adminGetAllProducts = async (req, res) => {
     try {
-        console.log("🔹 Checking if protect middleware is running...");
-        console.log("🔹 Authenticated User:", req.user);
+        console.log("🟢 FUNCTION TRIGGERED: adminGetAllProducts"); // ✅ Debug Log
+        console.log("🔹 Admin User:", req.user);
 
         if (!req.user || req.user.role !== "admin") {
             console.log("❌ Access Denied: Not an Admin");
@@ -79,13 +79,29 @@ const adminGetAllProducts = async (req, res) => {
 
         console.log("✅ Admin Access Granted");
 
+        // ✅ Fetch all products with vendor details
         const products = await Product.find().populate({
             path: "vendorId",
-            model: "User",
+            model: "User", // ✅ Ensure it references 'User'
             select: "name email role"
         });
 
-        console.log("✅ Products Retrieved for Admin:", products);
+        console.log("✅ Products Retrieved for Admin:", products); // ✅ Log products
+
+        if (!products.length) {
+            console.log("❌ No products found");
+            return res.status(404).json({ message: "No products found" });
+        }
+
+        // ✅ Check for invalid ObjectId issues
+        const invalidProducts = products.filter(product => 
+            product.vendorId && !mongoose.isValidObjectId(product.vendorId._id)
+        );
+
+        if (invalidProducts.length > 0) {
+            console.error("❌ Invalid Vendor ID in Products:", invalidProducts);
+            return res.status(400).json({ message: "Invalid vendor ID format in some products" });
+        }
 
         res.json(products);
     } catch (error) {
@@ -93,6 +109,7 @@ const adminGetAllProducts = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 
