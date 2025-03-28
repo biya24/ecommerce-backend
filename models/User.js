@@ -5,7 +5,9 @@ const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['customer', 'vendor', 'admin'], default: 'customer' },
+    role: { type: String, enum: ["customer", "vendor"], required: true },
+  isVerified: { type: Boolean, default: false }, // ✅ Email verification status
+  verificationToken: { type: String }, // ✅ Stores the token},
 }, { timestamps: true });
 
 // 🔹 Auto-hash password before saving

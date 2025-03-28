@@ -1,39 +1,107 @@
 const User = require('../models/User'); // ✅ Import User model
 const bcrypt = require('bcryptjs'); // ✅ Hash passwords
 const generateToken = require('../utils/generateToken');
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 // @desc   Register new user
 // @route  POST /api/users/signup
 // @access Public
 
+// const registerUser = async (req, res) => {
+//     try {
+//         const { name, email, password, role = "customer" } = req.body;
+
+//         console.log("🟢 Step 1: Received Plain Password ->", password);
+
+//         // ✅ DO NOT hash the password manually, let the schema handle it
+//         const user = await User.create({
+//             name,
+//             email,
+//             password, // ❌ No bcrypt.hash() here!
+//             role,
+//         });
+
+//         console.log("🟢 Step 2: Hashed Password Stored in MongoDB ->", user.password);
+
+//         res.status(201).json({
+//             _id: user._id,
+//             name: user.name,
+//             email: user.email,
+//             role: user.role,
+//             token: generateToken(user._id),
+//         });
+
+//     } catch (error) {
+//         res.status(500).json({ message: "Server error", error: error.message });
+//     }
+// };
+
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role = "customer" } = req.body;
-
-        console.log("🟢 Step 1: Received Plain Password ->", password);
-
-        // ✅ DO NOT hash the password manually, let the schema handle it
-        const user = await User.create({
-            name,
-            email,
-            password, // ❌ No bcrypt.hash() here!
-            role,
-        });
-
-        console.log("🟢 Step 2: Hashed Password Stored in MongoDB ->", user.password);
-
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
-        });
-
+      const { name, email, password, role } = req.body;
+  
+      let user = await User.findOne({ email });
+      if (user) return res.status(400).json({ message: "User already exists" });
+  
+      const verificationToken = crypto.randomBytes(32).toString("hex"); // ✅ Generate token
+  
+      user = new User({
+        name,
+        email,
+        password, // 🔒 Hash this before saving (use bcrypt)
+        role,
+        verificationToken,
+      });
+  
+      await user.save();
+  
+      // ✅ Send verification email
+      const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+      await sendVerificationEmail(user.email, verificationLink);
+  
+      res.status(201).json({ message: "Registration successful! Please check your email to verify your account." });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+      res.status(500).json({ message: "Server error", error });
     }
-};
+  };
+  
+  // ✅ Email sending function
+  const sendVerificationEmail = async (email, link) => {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      html: `<p>Click the link below to verify your email:</p>
+             <a href="${link}">Verify Email</a>`,
+    });
+  };
+
+  const verifyEmail = async (req, res) => {
+    try {
+      const { token } = req.params;
+      const user = await User.findOne({ verificationToken: token });
+  
+      if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+  
+      user.isVerified = true;
+      user.verificationToken = undefined; // Remove token after verification
+      await user.save();
+  
+      res.json({ message: "Email verified successfully! You can now log in." });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
 
 // @desc   Login user
 // @route  POST /api/users/login
@@ -59,6 +127,9 @@ const loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
+        if (!user.isVerified) {
+            return res.status(403).json({ message: "Please verify your email before logging in" });
+          }
 
         res.json({
             _id: user._id,
@@ -208,4 +279,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser,demoteUserToCustomer , deleteUser };
+module.exports = { registerUser, sendVerificationEmail, verifyEmail, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser,demoteUserToCustomer , deleteUser };
