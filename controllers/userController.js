@@ -101,6 +101,33 @@ const registerUser = async (req, res) => {
       res.status(500).json({ message: "Server error", error });
     }
   };
+
+  const resendVerificationEmail = async (req, res) => {
+    const { email } = req.body;
+  
+    try {
+      const user = await User.findOne({ email });
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      if (user.isVerified) {
+        return res.status(400).json({ message: "Email already verified" });
+      }
+  
+      const token = generateToken(user._id);
+      const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${token}`;
+  
+      await sendVerificationEmail(user.email, verificationLink);
+  
+      res.json({ message: "Verification email sent successfully" });
+    } catch (error) {
+      console.error("Error resending verification email:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+  
   
 
 // @desc   Login user
@@ -279,4 +306,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { registerUser, sendVerificationEmail, verifyEmail, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser,demoteUserToCustomer , deleteUser };
+module.exports = { registerUser, sendVerificationEmail, verifyEmail, resendVerificationEmail, loginUser, getUserProfile, updateUserProfile, getUsers, promoteUser,demoteUserToCustomer , deleteUser };
