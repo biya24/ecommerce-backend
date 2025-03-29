@@ -39,51 +39,80 @@ const nodemailer = require("nodemailer");
 
 const registerUser = async (req, res) => {
     try {
-      const { name, email, password, role } = req.body;
-  
-      let user = await User.findOne({ email });
-      if (user) return res.status(400).json({ message: "User already exists" });
-  
-      const verificationToken = crypto.randomBytes(32).toString("hex"); // ✅ Generate token
-  
-      user = new User({
-        name,
-        email,
-        password, // 🔒 Hash this before saving (use bcrypt)
-        role,
-        verificationToken,
-      });
-  
-      await user.save();
-  
-      // ✅ Send verification email
-      const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-      await sendVerificationEmail(user.email, verificationLink);
-  
-      res.status(201).json({ message: "Registration successful! Please check your email to verify your account." });
+        const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password || !role) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+        let user = await User.findOne({ email: normalizedEmail });
+
+        if (user) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+
+        // ✅ Hash password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // ✅ Generate email verification token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        user = new User({
+            name,
+            email: normalizedEmail,
+            password: hashedPassword, // ✅ Store hashed password
+            role,
+            verificationToken,
+        });
+
+        await user.save();
+
+        // ✅ Send verification email
+        const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+        await sendVerificationEmail(user.email, verificationLink);
+
+        res.status(201).json({
+            message: "Registration successful! A verification email has been sent. Please check your inbox.",
+        });
+
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+        console.error("❌ Registration Error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-  };
+};
+
   
   // ✅ Email sending function
   const sendVerificationEmail = async (email, link) => {
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Verify Your Email",
-      html: `<p>Click the link below to verify your email:</p>
-             <a href="${link}">Verify Email</a>`,
-    });
-  };
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "Gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        await transporter.sendMail({
+            from: `"Bazario Support" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: "Verify Your Email - Bazario",
+            html: `
+                <p>Hi,</p>
+                <p>Thank you for registering on Bazario! Please verify your email by clicking the link below:</p>
+                <a href="${link}" style="background-color:#4CAF50; color:white; padding:10px; text-decoration:none; display:inline-block; border-radius:5px;">Verify Email</a>
+                <p>If you did not register, please ignore this email.</p>
+            `,
+        });
+
+        console.log("✅ Verification email sent to:", email);
+    } catch (error) {
+        console.error("❌ Error sending verification email:", error);
+    }
+};
+
 
   const verifyEmail = async (req, res) => {
     try {
