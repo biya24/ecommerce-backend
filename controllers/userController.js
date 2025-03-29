@@ -114,22 +114,30 @@ const registerUser = async (req, res) => {
 };
 
 
-  const verifyEmail = async (req, res) => {
+const verifyEmail = async (req, res) => {
+    const { token } = req.params;
+    console.log("Received token:", token);  // ✅ Debugging line
+
     try {
-      const { token } = req.params;
-      const user = await User.findOne({ verificationToken: token });
-  
-      if (!user) return res.status(400).json({ message: "Invalid or expired token" });
-  
-      user.isVerified = true;
-      user.verificationToken = undefined; // Remove token after verification
-      await user.save();
-  
-      res.json({ message: "Email verified successfully! You can now log in." });
+        // Find user by verification token
+        const user = await User.findOne({ verificationToken: token });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        // Mark user as verified
+        user.isVerified = true;
+        user.verificationToken = null;
+        await user.save();
+
+        res.json({ message: "Email successfully verified!" });
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+        console.error("Email verification error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-  };
+};
+
 
   const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
