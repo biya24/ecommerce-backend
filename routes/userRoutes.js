@@ -5,6 +5,7 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 router.get("/verify-email/:token", verifyEmail);
+
 router.post("/resend-verification", resendVerificationEmail);
 
 router.get("/", protect, adminOnly, getUsers); // ✅ Get all users
