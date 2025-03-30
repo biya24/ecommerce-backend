@@ -38,6 +38,7 @@ const placeOrder = async (req, res) => {
         });
 
         const createdOrder = await order.save();
+        console.log("✅ Order Created:", createdOrder); // Debugging
 
         // ✅ Fetch customer details
         const customer = await User.findById(req.user._id);
@@ -89,7 +90,11 @@ const placeOrder = async (req, res) => {
         // ✅ Send email with HTML content
         await sendEmail(customer.email, emailSubject, emailText, emailHtml);
 
-        res.status(201).json({ message: "Order placed successfully, confirmation email sent!", order: createdOrder });
+        res.status(201).json({ 
+            message: "Order placed successfully, confirmation email sent!", 
+            orderId: createdOrder._id,
+            order: createdOrder 
+        });
 
     } catch (error) {
         console.error("Order Placement Error:", error);
