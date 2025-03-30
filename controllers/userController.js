@@ -141,29 +141,23 @@ const verifyEmail = async (req, res) => {
 
   const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
-  
+
     try {
-      const user = await User.findOne({ email });
-  
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      if (user.isVerified) {
-        return res.status(400).json({ message: "Email already verified" });
-      }
-  
-      const token = generateToken(user._id);
-      const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${token}`;
-  
-      await sendVerificationEmail(user.email, verificationLink);
-  
-      res.json({ message: "Verification email sent successfully" });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        if (user.isVerified) return res.status(400).json({ message: "Email is already verified." });
+
+        user.verificationToken = generateToken(); // Generate new token
+        await user.save();
+
+        await sendVerificationEmail(user.email, user.verificationToken);
+
+        res.status(200).json({ message: "Verification email resent successfully!" });
     } catch (error) {
-      console.error("Error resending verification email:", error);
-      res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ message: "Something went wrong, try again." });
     }
-  };
+};
   
   
 
