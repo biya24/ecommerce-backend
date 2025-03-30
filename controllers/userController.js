@@ -191,9 +191,9 @@ const loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
-        if (!user.isVerified) {
-            return res.status(403).json({ message: "Please verify your email before logging in" });
-          }
+        // if (!user.isVerified) {
+        //     return res.status(403).json({ message: "Please verify your email before logging in" });
+        //   }
 
         res.json({
             _id: user._id,
