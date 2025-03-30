@@ -38,8 +38,8 @@ router.post("/pay", async (req, res) => {
                 },
             ],
             mode: "payment",
-            success_url: `http://localhost:5173/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: "http://localhost:5173/cart",
+            success_url: `https://bazario-frontend.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: "https://bazario-frontend.vercel.app/cart",
             metadata: { orderId }, // ✅ Store Order ID in metadata
         });
 
