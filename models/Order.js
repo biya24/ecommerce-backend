@@ -8,6 +8,16 @@ const OrderSchema = new mongoose.Schema({
         price: { type: Number, required: true }
     }],
     totalAmount: { type: Number, required: true },
+    deliveryAddress: {
+        fullName: { type: String, required: true },
+        houseName: { type: String, required: true },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        district: { type: String, required: true },
+        pin: { type: String, required: true },
+        mobile: { type: String, required: true },
+        addressType: { type: String, enum: ["home", "work"], required: true }
+    },
     status: { type: String, enum: ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Paid'], default: 'Pending' },
 }, { timestamps: true });
 
