@@ -53,8 +53,8 @@ const registerUser = async (req, res) => {
         }
 
         // ✅ Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        //const salt = await bcrypt.genSalt(10);
+       // const hashedPassword = await bcrypt.hash(password, salt);
 
         // ✅ Generate email verification token
         const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -62,7 +62,7 @@ const registerUser = async (req, res) => {
         user = new User({
             name,
             email: normalizedEmail,
-            password: hashedPassword, // ✅ Store hashed password
+            password, // ✅ Store hashed password
             role,
             verificationToken,
         });
