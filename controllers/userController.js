@@ -139,7 +139,7 @@ const verifyEmail = async (req, res) => {
 };
 
 
-async (req, res) => {
+const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
 
     try {
