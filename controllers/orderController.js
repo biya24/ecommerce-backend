@@ -12,17 +12,28 @@ const placeOrder = async (req, res) => {
         if (req.user.role !== 'customer') {
             return res.status(403).json({ message: 'Only customers can place orders' });
         }
+        console.log("📦 Received Order Data:", req.body);
 
-        const { items, totalAmount } = req.body;
+        const { items, totalAmount, deliveryAddress } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: 'No items in the order' });
+        }
+
+         // ✅ Validate if `deliveryAddress` is missing
+         if (!deliveryAddress || !deliveryAddress.fullName || !deliveryAddress.mobile || !deliveryAddress.pin ||
+            !deliveryAddress.district || !deliveryAddress.city || !deliveryAddress.street || !deliveryAddress.houseName) {
+            return res.status(400).json({ 
+                message: "Order validation failed: Missing required address fields ❌",
+                error: "Missing required address details in deliveryAddress",
+            });
         }
 
         const order = new Order({
             customerId: req.user._id,
             items,
             totalAmount,
+            deliveryAddress,
             status: 'Pending',
         });
 
