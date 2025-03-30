@@ -23,7 +23,12 @@ connectDB(); // ✅ Connect to MongoDB
 
 const app = express();
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+    origin: ["https://bazario-frontend.vercel.app", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.use(express.json()); // ✅ Use only this for JSON parsing
 app.use(bodyParser.urlencoded({ extended: true })); // ✅ Allow form-data requests
 
