@@ -139,7 +139,7 @@ const verifyEmail = async (req, res) => {
 };
 
 
-  const resendVerificationEmail = async (req, res) => {
+async (req, res) => {
     const { email } = req.body;
 
     try {
@@ -148,13 +148,18 @@ const verifyEmail = async (req, res) => {
 
         if (user.isVerified) return res.status(400).json({ message: "Email is already verified." });
 
-        user.verificationToken = generateToken(); // Generate new token
+        // ✅ Generate a proper verification token
+        user.verificationToken = crypto.randomBytes(32).toString("hex"); 
         await user.save();
 
-        await sendVerificationEmail(user.email, user.verificationToken);
+        // ✅ Ensure you're sending the correct frontend URL
+        const verificationUrl = `https://bazario-frontend.vercel.app/verify-email/${user.verificationToken}`;
+
+        await sendVerificationEmail(user.email, verificationUrl);
 
         res.status(200).json({ message: "Verification email resent successfully!" });
     } catch (error) {
+        console.error("Error resending verification email:", error);
         res.status(500).json({ message: "Something went wrong, try again." });
     }
 };
