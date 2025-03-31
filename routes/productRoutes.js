@@ -69,6 +69,25 @@ router.delete("/:id", protect, vendorOnly, deleteProduct);
 
 router.delete("/:id/admin", protect, adminOnly, deleteProductByAdmin); // ✅ Admin delete product
 
+router.put("/:id", async (req, res) => {
+    const { name, description, price, stock, category } = req.body;
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
+
+    product.name = name;
+    product.description = description;
+    product.price = price;
+    product.stock = stock;
+    product.category = category;
+
+    await product.save();
+    res.json({ message: "Product updated successfully!" });
+});
+
+
 
 
 
