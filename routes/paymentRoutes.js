@@ -2,6 +2,8 @@ const express = require("express");
 const Stripe = require("stripe");
 require("dotenv").config();
 const { updateOrderAfterPayment } = require("../controllers/paymentController");
+const Order = require("../models/Order");
+const mongoose = require("mongoose");
 
 
 
@@ -91,11 +93,11 @@ router.post("/success", updateOrderAfterPayment);
 router.put("/retry-payment/:orderId", async (req, res) => {
     try {
         const { orderId } = req.params;
-        if (!orderId) {
-            return res.status(400).json({ message: "Order ID is required" });
+
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({ message: "Invalid Order ID format" });
         }
 
-        // ✅ Fetch the order details (Ensure you have an Order model)
         const order = await Order.findById(orderId);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -105,17 +107,16 @@ router.put("/retry-payment/:orderId", async (req, res) => {
             return res.status(400).json({ message: "Payment can only be retried for pending orders" });
         }
 
-        // ✅ Create a new payment session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
             line_items: [
                 {
                     price_data: {
-                        currency: "usd", // Change currency if needed
+                        currency: "usd",
                         product_data: {
                             name: "Retry Payment for Order",
                         },
-                        unit_amount: order.totalAmount * 100, // Convert to cents
+                        unit_amount: order.totalAmount * 100,
                     },
                     quantity: 1,
                 },
@@ -127,6 +128,7 @@ router.put("/retry-payment/:orderId", async (req, res) => {
         });
 
         res.json({ url: session.url });
+
     } catch (error) {
         console.error("Retry Payment Error:", error);
         res.status(500).json({ message: "Failed to retry payment", error: error.message });
