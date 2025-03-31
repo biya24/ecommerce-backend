@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require("mongoose");
 const {getUserOrders, placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin, getOrderById, deleteOrderByAdmin } = require('../controllers/orderController');
 const { protect, adminOnly} = require('../middleware/authMiddleware');
 const Order = require("../models/Order");
@@ -11,6 +12,29 @@ router.get('/', protect, getOrders);
 router.get("/admin", protect, adminOnly, getAllOrdersAdmin);
 // ✅ Fetch logged-in user's orders
 router.get("/my-orders", protect, getUserOrders);
+
+router.get("/vendor", protect, async (req, res) => {
+    try {
+        const vendorId = req.user._id; // ✅ Logged-in vendor's ID
+
+        // 1️⃣ Fetch products that belong to the vendor
+        const vendorProducts = await Product.find({ vendorId }).select("_id");
+
+        // 2️⃣ Extract product IDs of the vendor
+        const vendorProductIds = vendorProducts.map(product => product._id);
+
+        // 3️⃣ Fetch orders that contain at least one product from the vendor
+        const vendorOrders = await Order.find({
+            "items.productId": { $in: vendorProductIds }
+        });
+
+        res.json(vendorOrders);
+    } catch (error) {
+        console.error("Error fetching vendor sales:", error);
+        res.status(500).json({ message: "Failed to fetch sales", error: error.message });
+    }
+});
+
 // ✅ Get Single Order
 router.get("/:id", protect, getOrderById);
 // ✅ Admin Delete Order
@@ -18,34 +42,7 @@ router.delete("/:id/admin", protect, adminOnly, deleteOrderByAdmin);
 
 router.put('/:orderId/status', protect, updateOrderStatus); //route for updating order status
 
-router.get("/vendor", protect, async (req, res) => {
-    try {
-        // Fetch all orders
-        const orders = await Order.find();
 
-        // Extract unique product IDs from all orders
-        const productIds = orders.flatMap(order => order.items.map(item => item.productId));
-
-        // Fetch products with their vendorId
-        const products = await Product.find({ _id: { $in: productIds } }).select("_id vendorId");
-
-        // Create a mapping of productId to vendorId
-        const productVendorMap = {};
-        products.forEach(product => {
-            productVendorMap[product._id.toString()] = product.vendorId.toString();
-        });
-
-        // Filter orders where any item's product's vendorId matches the logged-in vendor's ID
-        const vendorSales = orders.filter(order =>
-            order.items.some(item => productVendorMap[item.productId.toString()] === req.user._id.toString())
-        );
-
-        res.json(vendorSales);
-    } catch (error) {
-        console.error("Error fetching vendor sales:", error);
-        res.status(500).json({ message: "Failed to fetch sales" });
-    }
-});
 
 
 
