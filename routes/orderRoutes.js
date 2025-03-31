@@ -20,25 +20,19 @@ router.put('/:orderId/status', protect, updateOrderStatus); //route for updating
 
 router.get("/vendor", protect, async (req, res) => {
     try {
-        console.log("Authenticated Vendor ID:", req.user._id); // ✅ Debugging
-
-        // Step 1: Find products that belong to the vendor
-        const vendorProducts = await Product.find({ vendorId: req.user._id }).select("_id");
-        const vendorProductIds = vendorProducts.map((product) => product._id); // Extract product IDs
-
-        console.log("Vendor's Products:", vendorProductIds); // ✅ Debugging
-
-        // Step 2: Find orders containing vendor's products
-        const sales = await Order.find({ "items.productId": { $in: vendorProductIds } })
-            .populate("customerId", "name email"); // ✅ Populate customer details
-
-        console.log("Sales Fetched:", sales); // ✅ Debugging
+        if (!req.user || !req.user._id) {
+            return res.status(400).json({ message: "Unauthorized: Vendor ID not found" });
+        }
+        
+        const vendorId = new mongoose.Types.ObjectId(req.user._id);
+        const sales = await Order.find({ "items.vendorId": vendorId }).populate("buyer", "name email");
         res.json(sales);
     } catch (error) {
-        console.error("Error fetching sales:", error.message);
-        res.status(500).json({ message: "Failed to fetch sales" });
+        console.error(error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
 
 
 
