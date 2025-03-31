@@ -1,6 +1,8 @@
 const express = require('express');
 const {getUserOrders, placeOrder, getOrders, updateOrderStatus, getAllOrdersAdmin, getOrderById, deleteOrderByAdmin } = require('../controllers/orderController');
 const { protect, adminOnly} = require('../middleware/authMiddleware');
+const Order = require("../models/Order");
+const Product = require("../models/Product");
 
 const router = express.Router();
 
@@ -18,12 +20,25 @@ router.put('/:orderId/status', protect, updateOrderStatus); //route for updating
 
 router.get("/vendor", protect, async (req, res) => {
     try {
-      const sales = await Order.find({ "items.vendorId": req.user._id }).populate("buyer", "name email");
-      res.json(sales);
+        console.log("Authenticated Vendor ID:", req.user._id); // ✅ Debugging
+
+        // Step 1: Find products that belong to the vendor
+        const vendorProducts = await Product.find({ vendorId: req.user._id }).select("_id");
+        const vendorProductIds = vendorProducts.map((product) => product._id); // Extract product IDs
+
+        console.log("Vendor's Products:", vendorProductIds); // ✅ Debugging
+
+        // Step 2: Find orders containing vendor's products
+        const sales = await Order.find({ "items.productId": { $in: vendorProductIds } })
+            .populate("customerId", "name email"); // ✅ Populate customer details
+
+        console.log("Sales Fetched:", sales); // ✅ Debugging
+        res.json(sales);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch sales" });
+        console.error("Error fetching sales:", error.message);
+        res.status(500).json({ message: "Failed to fetch sales" });
     }
-  });
+});
 
 
 
