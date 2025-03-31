@@ -88,5 +88,51 @@ router.post("/success", updateOrderAfterPayment);
 //     }
 // });
 
+router.put("/retry-payment/:orderId", async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).json({ message: "Order ID is required" });
+        }
+
+        // ✅ Fetch the order details (Ensure you have an Order model)
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        if (order.status !== "Pending") {
+            return res.status(400).json({ message: "Payment can only be retried for pending orders" });
+        }
+
+        // ✅ Create a new payment session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [
+                {
+                    price_data: {
+                        currency: "usd", // Change currency if needed
+                        product_data: {
+                            name: "Retry Payment for Order",
+                        },
+                        unit_amount: order.totalAmount * 100, // Convert to cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: "payment",
+            success_url: `https://bazario-frontend.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: "https://bazario-frontend.vercel.app/cart",
+            metadata: { orderId },
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error("Retry Payment Error:", error);
+        res.status(500).json({ message: "Failed to retry payment", error: error.message });
+    }
+});
+
+
 
 module.exports = router;
