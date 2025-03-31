@@ -20,11 +20,24 @@ router.put('/:orderId/status', protect, updateOrderStatus); //route for updating
 
 router.get("/vendor", protect, async (req, res) => {
     try {
-        const orders = await Order.find().populate("items.productId"); // Populate product details
+        // Fetch all orders
+        const orders = await Order.find();
 
-        // Filter orders where the logged-in vendor's ID matches any item's vendorId
+        // Extract unique product IDs from all orders
+        const productIds = orders.flatMap(order => order.items.map(item => item.productId));
+
+        // Fetch products with their vendorId
+        const products = await Product.find({ _id: { $in: productIds } }).select("_id vendorId");
+
+        // Create a mapping of productId to vendorId
+        const productVendorMap = {};
+        products.forEach(product => {
+            productVendorMap[product._id.toString()] = product.vendorId.toString();
+        });
+
+        // Filter orders where any item's product's vendorId matches the logged-in vendor's ID
         const vendorSales = orders.filter(order =>
-            order.items.some(item => item.productId.vendorId?.toString() === req.user._id.toString())
+            order.items.some(item => productVendorMap[item.productId.toString()] === req.user._id.toString())
         );
 
         res.json(vendorSales);
