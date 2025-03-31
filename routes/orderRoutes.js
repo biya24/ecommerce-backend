@@ -16,6 +16,15 @@ router.delete("/:id/admin", protect, adminOnly, deleteOrderByAdmin);
 
 router.put('/:orderId/status', protect, updateOrderStatus); //route for updating order status
 
+router.get("/vendor", protect, async (req, res) => {
+    try {
+      const sales = await Order.find({ "items.vendorId": req.user._id }).populate("buyer", "name email");
+      res.json(sales);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sales" });
+    }
+  });
+
 
 
 
