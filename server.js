@@ -17,6 +17,7 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const notificationRoutes = require("./routes/notificationRoutes");
 
 dotenv.config(); // ✅ Load environment variables
 connectDB(); // ✅ Connect to MongoDB
@@ -42,6 +43,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // const Product = require('./models/Product'); // ✅ Import Product Model
 

@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const User = require('../models/User'); // ✅ Import User model to get customer email
 const sendEmail = require('../config/email');
 const Product = require('../models/Product');
+const Notification = require("../models/Notification");
 
 // @desc   Place a new order
 
@@ -89,6 +90,18 @@ const placeOrder = async (req, res) => {
 
         // ✅ Send email with HTML content
         await sendEmail(customer.email, emailSubject, emailText, emailHtml);
+
+        // 🔔 Notify vendors
+        for (const item of items) {
+            const product = await Product.findById(item.productId);
+            if (product) {
+                await Notification.create({
+                    vendorId: product.vendorId,
+                    orderId: order._id,
+                    message: `You received a new order for ${item.quantity} x ${product.name}`,
+                });
+            }
+        }
 
         res.status(201).json({ 
             message: "Order placed successfully, confirmation email sent!", 
