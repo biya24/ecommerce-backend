@@ -149,16 +149,43 @@ const updateOrderStatus = async (req, res) => {
         const { status } = req.body;
 
         // ✅ Validate status
-        const validStatuses = ["Pending", "Shipped", "Delivered", "Canceled"];
+        const validStatuses = ["Pending", "Shipped", "Delivered", "Canceled", "Paid"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Invalid status update" });
         }
 
-        const order = await Order.findById(orderId).populate('customerId', 'name email');
+        const order = await Order.findById(orderId).populate("customerId", "name email");
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        // ✅ Update stock when status changes
+       // ✅ Automatically adjust stock based on order status
+if (status === "Paid" && order.status !== "Paid") {
+    for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+        if (product) {
+            if (product.stock >= item.quantity) {
+                product.stock -= item.quantity;
+                await product.save();
+            } else {
+                return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
+            }
+        }
+    }
+} 
+
+if (status === "Canceled" && order.status !== "Canceled") {
+    for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+        if (product) {
+            product.stock += item.quantity;
+            await product.save();
+        }
+    }
+}
+
+        // ✅ Update order status
         order.status = status;
         await order.save();
 
@@ -195,16 +222,17 @@ const updateOrderStatus = async (req, res) => {
             </div>
         `;
 
-        // ✅ Send email notification with both plain text & HTML
+        // ✅ Send email notification
         await sendEmail(customerEmail, emailSubject, emailText, emailHtml);
 
-        res.json({ message: `Order updated to ${status} and email sent!`, order });
+        res.json({ message: `Order updated to ${status}, stock adjusted, and email sent!`, order });
 
     } catch (error) {
         console.error("Order Status Update Error:", error);
-        res.status(500).json({ message: 'Error updating order status', error: error.message });
+        res.status(500).json({ message: "Error updating order status", error: error.message });
     }
 };
+
 
 const getAllOrdersAdmin = async (req, res) => {
     try {
