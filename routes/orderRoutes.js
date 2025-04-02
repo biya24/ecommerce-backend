@@ -50,7 +50,7 @@ router.put('/cancel/:id', protect, async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        if (order.status !== "Pending" || order.status !== "Paid") {
+        if (order.status !== "Pending" && order.status !== "Paid") {
             return res.status(400).json({ message: "Only pending/paid orders can be canceled" });
         }
 
