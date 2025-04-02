@@ -42,6 +42,76 @@ router.delete("/:id/admin", protect, adminOnly, deleteOrderByAdmin);
 
 router.put('/:orderId/status', protect, updateOrderStatus); //route for updating order status
 
+router.put('/cancel/:id', protect, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        if (order.status !== "Pending") {
+            return res.status(400).json({ message: "Only pending orders can be canceled" });
+        }
+
+        order.status = "Cancelled";
+        await order.save();
+
+        res.json({ message: "Order canceled successfully", order });
+    } catch (error) {
+        console.error("Error canceling order:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+router.put('/return/:id', protect, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        if (order.status !== "Delivered") {
+            return res.status(400).json({ message: "Only delivered orders can be returned" });
+        }
+
+        order.status = "Returned";
+        await order.save();
+
+        res.json({ message: "Order returned successfully", order });
+    } catch (error) {
+        console.error("Error returning order:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
+router.post('/reorder/:id', protect, async (req, res) => {
+    try {
+        const oldOrder = await Order.findById(req.params.id);
+
+        if (!oldOrder) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        const newOrder = new Order({
+            customerId: req.user._id,
+            items: oldOrder.items,
+            totalPrice: oldOrder.totalPrice,
+            status: "Pending", // New order starts as Pending
+        });
+
+        const savedOrder = await newOrder.save();
+
+        res.json({ message: "Reorder successful", order: savedOrder });
+    } catch (error) {
+        console.error("Error reordering:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
 
 
 
