@@ -54,7 +54,7 @@ router.put('/cancel/:id', protect, async (req, res) => {
             return res.status(400).json({ message: "Only pending/paid orders can be canceled" });
         }
 
-        order.status = "Cancelled";
+        order.status = "Canceled";
         await order.save();
 
         res.json({ message: "Order canceled successfully", order });
@@ -98,12 +98,13 @@ router.post('/reorder/:id', protect, async (req, res) => {
         const newOrder = new Order({
             customerId: req.user._id,
             items: oldOrder.items,
-            totalPrice: oldOrder.totalPrice,
-            status: "Pending", // New order starts as Pending
+            totalAmount: oldOrder.totalAmount, // ✅ Fix field name
+            status: "Pending", // ✅ New order starts as Pending
+            deliveryAddress: oldOrder.deliveryAddress, // ✅ Ensure delivery address is copied
+            paymentMethod: oldOrder.paymentMethod, // ✅ Copy payment method if needed
         });
 
         const savedOrder = await newOrder.save();
-
         res.json({ message: "Reorder successful", order: savedOrder });
     } catch (error) {
         console.error("Error reordering:", error);
