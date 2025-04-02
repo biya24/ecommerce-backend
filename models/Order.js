@@ -18,7 +18,7 @@ const OrderSchema = new mongoose.Schema({
         mobile: { type: String, required: true },
         addressType: { type: String, enum: ["home", "work"], required: true }
     },
-    status: { type: String, enum: ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Paid'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Paid', , 'Returned'], default: 'Pending' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', OrderSchema);
